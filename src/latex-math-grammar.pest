@@ -1,0 +1,145 @@
+//! # LaTeX Formula Grammar
+//! **Authors:** Mario Hlaca, Jevgeni Tarassov.
+//!
+
+// Control Characters & Meta Characters  ------------------------------------------------------------------------------
+control_character      = { "\\" }
+whitespace             = _{ (space_character | tab_character | linebreak_character)+ }
+space_character        = { " " }
+tab_character          = { "\t" }
+linebreak_character    = { newline_character | caret_return_character | (newline_character ~ caret_return_character) }
+newline_character      = { "\n" }
+caret_return_character = { "\r" }
+dots                   = { dots_character | dot_character }
+dots_character         = { control_character ~ ("dots" | "ldots") }
+dot_character          = { control_character ~ "cdot" }
+
+// Brackets -----------------------------------------------------------------------------------------------------------
+round_brackets  = { "(" ~ (formula | round_brackets | whitespace)* ~  ")" }
+square_brackets = { "[" ~ (formula | square_brackets | round_brackets | whitespace)* ~  "]" }
+curly_brackets  = { "{" ~ (formula | curly_brackets | square_brackets | round_brackets | whitespace)* ~  "}" }
+
+// Expression ----------------------------------------------------------------------------------------------------------
+intro        = { begin_end | begin_end_un | dollardollar | dollar | dollarsquare } // Starting to implement the begin_end formula containers
+dollar       = { "$" ~ expression ~ "$" }
+dollardollar = { "$$" ~ expression ~ "$$" }
+dollarsquare = { control_character ~ "[" ~ expression ~ control_character ~ "]" }
+begin_end    = { control_character ~ "begin{equation}" ~ expression ~ control_character ~ "end{equation}" }
+begin_end_un = { control_character ~ "begin{equation*}" ~ expression ~ control_character ~ "end{equation*}" }
+expression   = { (formula | curly_brackets | square_brackets | round_brackets | whitespace)+ }
+
+
+// Formulas -----------------------------------------------------------------------------------------------------------
+formula  = { (operator | term | dots | trigonometric)+ }
+term     = { variable | number }
+variable = { ((!control_character ~ letter_latin) | letter_greek) }
+
+operator = {
+    operator_equal      |
+    operator_plus       |
+    operator_minus      |
+    operator_multiplier |
+    operator_division   |
+    operator_power      |
+    operator_sqrt       |
+    operator_factorial  |
+    operator_sum        |
+    operator_partial    |
+    operator_frac
+}
+
+subscript   = { "_" ~ (formula | curly_brackets) }
+superscript = { "^" ~ (formula | curly_brackets) }
+
+operator_factorial  = { "!" }
+operator_equal      = { "=" }
+operator_plus       = { "+" }
+operator_minus      = { "-" | "–" }
+operator_multiplier = { "*" }
+operator_division   = { "/" }
+operator_sqrt       = {control_character ~ "sqrt" ~ ("{" ~ (number|variable) ~ "}"|"")}
+operator_sum        = {control_character ~ "sum" ~ subscript? ~ superscript? ~ subscript?}
+operator_prod       = {control_character ~ "prod" ~ subscript? ~ superscript? ~ subscript?}
+operator_int        = {control_character ~ "int" ~ subscript? ~ superscript? ~ subscript?}
+operator_partial    = {control_character ~ "partial" ~ subscript? ~ superscript? ~ subscript?}
+operator_frac       = {control_character ~ "frac" ~ curly_brackets{2}}
+
+//! # Power Operator (Exponentiation)
+operator_power = {
+    !operator_sum  ~
+    !operator_prod ~
+    !operator_int  ~
+    operator_power_base ~ "^" ~ operator_power_exponent
+}
+operator_power_base     = { term | round_brackets }
+operator_power_exponent = { formula | curly_brackets }
+
+// Trigonometric functions ------------------------------------------------------------------------------------------------------------
+trigonometric = {
+    sin | cos | tan | asin | acos | atan
+}
+
+sin  = { control_character ~ "sin" ~ round_brackets }
+cos  = { control_character ~ "cos" ~ round_brackets }
+tan  = { control_character ~ "tan" ~ round_brackets }
+asin = { control_character ~ "arcsin" ~ round_brackets }
+acos = { control_character ~ "arccos" ~ round_brackets }
+atan = { control_character ~ "arctan" ~ round_brackets }
+
+// Numbers ------------------------------------------------------------------------------------------------------------
+number = { ('0'..'9')+ ~ "."? ~ ('0'..'9')* }   // TODO decimal points?
+
+// Latin Letters ------------------------------------------------------------------------------------------------------
+letter_latin = { ('a'..'z' | 'A'..'Z') ~ ( subscript | "") }
+
+// Greek Letters ------------------------------------------------------------------------------------------------------
+letter_greek = {
+    letter_alpha   |
+    letter_beta    |
+    letter_pi      |
+    letter_gamma   |
+	letter_rho     |
+	letter_delta   |
+	letter_sigma   |
+	letter_epsilon |
+    letter_phi     |
+    letter_psi     |
+    letter_hbar
+}
+
+// Greek Letter Classes -----------------------------------------------------------------------------------------------
+letter_alpha   = { letter_alpha_lower | letter_alpha_upper }
+letter_beta    = { letter_beta_lower | letter_beta_upper }
+letter_pi      = { letter_pi_lower | letter_pi_upper }
+letter_gamma   = { letter_gamma_lower | letter_gamma_upper }
+letter_rho     = { letter_rho_lower | letter_rho_upper }
+letter_delta   = { letter_delta_lower | letter_delta_upper }
+letter_sigma   = { letter_sigma_lower | letter_sigma_upper }
+letter_epsilon = { letter_epsilon_lower | letter_epsilon_upper }
+letter_phi     = { letter_phi_lower | letter_phi_upper }
+letter_psi     = { letter_psi_lower | letter_psi_upper }
+letter_hbar    = { control_character ~ "hbar" }
+
+// Lower-case Greek Letters -------------------------------------------------------------------------------------------
+letter_alpha_lower   = { control_character ~ "alpha" }
+letter_beta_lower    = { control_character ~ "beta" }
+letter_pi_lower      = { control_character ~ "pi" }
+letter_gamma_lower   = { control_character ~ "gamma" }
+letter_rho_lower     = { control_character ~ "rho" }
+letter_delta_lower   = { control_character ~ "delta" }
+letter_sigma_lower   = { control_character ~ "sigma" }
+letter_epsilon_lower = { control_character ~ "epsilon" }
+letter_phi_lower     = { control_character ~ "phi" }
+letter_psi_lower     = { control_character ~ "psi" }
+
+// Upper-case Greek Letters -------------------------------------------------------------------------------------------
+letter_alpha_upper   = { control_character ~ "Alpha" }
+letter_beta_upper    = { control_character ~ "Beta" }
+letter_pi_upper      = { control_character ~ "Pi" }
+letter_gamma_upper   = { control_character ~ "Gamma" }
+letter_rho_upper     = { control_character ~ "Rho" }
+letter_delta_upper   = { control_character ~ "Delta" }
+letter_sigma_upper   = { control_character ~ "Sigma" }
+letter_epsilon_upper = { control_character ~ "Epsilon" }
+letter_phi_upper     = { control_character ~ "Phi" }
+letter_psi_upper     = { control_character ~ "Psi" }
