@@ -1,0 +1,175 @@
+2c2
+< // **Authors:** Mario Hlaca, Andrea Neroni, Jevgeni Tarassov.
+---
+> // **Authors:** Mario Hlaca, Jevgeni Tarassov.
+8,9c8
+< //! As a last resort it may be that something has been parenthesised for some reason
+< simple_element         = { operator | control_statement | single_term | control_statement_body }
+---
+> simple_element         = { operator | control_statement | single_term }
+12,14c11
+<     //! added a few common punctuation
+<     "," | "." | ";" | "(" | ")" | "[" | "]" | "|" | "<" | ">" |
+<     control_character ~ "{" | control_character ~ "}"
+---
+>     "," | "." | ";" | "(" | ")" | "[" | "]" | "|"
+22c19
+<     ASCII_ALPHA+
+---
+>     letter_latin+
+31c28
+< environment_name     = { ASCII_ALPHA+ }
+---
+> environment_name     = { letter_latin+ }
+45c42
+< whitespace                  = _{ (space_character | tab_character | NEWLINE)+ }
+---
+> whitespace                  = _{ (space_character | tab_character | linebreak_character)+ }
+48,53c45,49
+< //! substituted with built-in
+< //linebreak_character         = _{
+< //    newline_character |
+< //    caret_return_character |
+< //    (caret_return_character ~ newline_character)
+< //}
+---
+> linebreak_character         = _{
+>     newline_character |
+>     caret_return_character |
+>     (caret_return_character ~ newline_character)
+> }
+60,64c56,58
+<     //operator_exp |
+<     //operator_subscript |
+<     operator_level |
+<     operator_int   |
+<     operator_frac
+---
+>     operator_exp |
+>     operator_subscript |
+>     operator_integral
+72,80d65
+< // Level-change Operator (what a stupid name)
+< operator_level = { operator_exp | operator_subscript |
+<                    operator_exp ~ operator_subscript |
+<                    operator_subscript ~ operator_exp
+< }
+< operator_subscript = { "_" ~ operator_argument }
+< operator_exp       = { "^" ~ operator_argument }
+< 
+< 
+82,86c67,71
+< //operator_exp = {
+< //    operator_exp_base ~ "^" ~ operator_exp_exponent
+< //}
+< //operator_exp_base     = { operator_argument }
+< //operator_exp_exponent = { operator_argument }
+---
+> operator_exp = {
+>     operator_exp_base ~ "^" ~ operator_exp_exponent
+> }
+> operator_exp_base     = { operator_argument }
+> operator_exp_exponent = { operator_argument }
+89,97c74,75
+< //operator_subscript = {
+< //    operator_subscript_base ~ "_" ~ operator_subscript_index
+< //}
+< //operator_subscript_base  = { operator_argument }
+< //operator_subscript_index = { operator_argument }
+< 
+< // Fraction Operator
+< operator_frac = {
+<     control_character ~ "frac" ~ (whitespace* ~ operator_argument){2}
+---
+> operator_subscript = {
+>     operator_subscript_base ~ "_" ~ operator_subscript_index
+98a77,78
+> operator_subscript_base  = { operator_argument }
+> operator_subscript_index = { operator_argument }
+100,103c80,82
+< // Integral Operator
+< operator_int = {
+<     //! This should match also multiple integrals (what about whitespaces???)
+<     control_character ~ "i"+ ~ "nt" ~
+---
+> // Integral
+> operator_integral = {
+>     control_character ~ "int" ~
+106,110c85,87
+<         //! Added optionality as you can also have only one of the two
+<         (operator_integral_subscript ~ whitespace* ~ operator_integral_superscript?) |
+<         (operator_integral_superscript ~ whitespace* ~ operator_integral_subscript?)
+<     //! Added optionality as you can have an undefined intergral
+<     )? ~
+---
+>         (operator_integral_subscript ~ whitespace* ~ operator_integral_superscript) |
+>         (operator_integral_superscript ~ whitespace* ~ operator_integral_subscript)
+>     ) ~
+118,122d94
+< // Text Operator
+< operator_text = {
+<     control_character ~ "text" ~ whitespace* ~ operator_argument
+< }
+< 
+124,125c96,97
+< number = { ASCII_DIGIT+ ~ "."? ~ ASCII_DIGIT* }
+< letter = { ASCII_ALPHA | letter_greek }
+---
+> number = { ('0'..'9')+ ~ "."? ~ ('0'..'9')* }
+> letter = { letter_latin | letter_greek }
+128d99
+< //! This is in principle not required
+133,146c104,117
+<     letter_alpha   |
+<     letter_beta    |
+<     letter_gamma   |
+<     letter_delta   |
+<     letter_epsilon |
+<     letter_zeta    |
+<     letter_eta     |
+<     letter_theta   |
+<     letter_iota    |
+<     letter_kappa   |
+<     letter_lambda  |
+<     letter_mu      |
+<     letter_nu      |
+<     letter_xi      |
+---
+>     letter_alpha |
+>     letter_beta  |
+>     letter_gamma |
+> 	letter_delta |
+> 	letter_epsilon |
+>     letter_zeta |
+>     letter_eta   |
+>     letter_theta |
+>     letter_iota  |
+>     letter_kappa |
+>     letter_lambda |
+>     letter_mu    |
+>     letter_nu    |
+>     letter_xi    |
+148,151c119,122
+<     letter_pi      |
+<     letter_rho     |
+<     letter_sigma   |
+<     letter_tau     |
+---
+>     letter_pi    |
+> 	letter_rho   |
+> 	letter_sigma |
+>     letter_tau |
+153,155c124,126
+<     letter_phi     |
+<     letter_chi     |
+<     letter_psi     |
+---
+>     letter_phi |
+>     letter_chi |
+>     letter_psi |
+243,247d213
+< //! Added a few miscellanea
+< vert_character         = { control_character ~ "vert" }
+< langle_character       = { control_character ~ "langle" }
+< rangle_character       = { control_character ~ "rangle" }
+< 

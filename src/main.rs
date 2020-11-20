@@ -25,9 +25,11 @@ fn main() {
     let input = "latex_test.tex";
     let latex = fs::read_to_string(input).expect("Cannot open file");
 
-    let parse = LaTeXParser::parse(Rule::intro, &latex)
-                            .expect("").next().unwrap();
+    println!("parsing");
+    let parse = LaTeXParser::parse(Rule::expression, &latex)
+                            .expect("Error").next().unwrap();
 
+    println!("printing");
     printout(parse, 0);
 }
 

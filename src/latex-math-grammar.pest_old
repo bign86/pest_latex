@@ -1,17 +1,14 @@
 // # LaTeX Formula Grammar
-// **Authors:** Mario Hlaca, Andrea Neroni, Jevgeni Tarassov.
+// **Authors:** Mario Hlaca, Jevgeni Tarassov.
 //
 // Top level rule is `expression`.
 
 expression             = { (expression_element | whitespace)* }
 expression_element     = { environment | simple_element }
-//! As a last resort it may be that something has been parenthesised for some reason
-simple_element         = { operator | control_statement | single_term | control_statement_body }
+simple_element         = { operator | control_statement | single_term }
 single_term            = { letter | number | punctuation }
 punctuation            = {
-    //! added a few common punctuation
-    "," | "." | ";" | "(" | ")" | "[" | "]" | "|" | "<" | ">" |
-    control_character ~ "{" | control_character ~ "}"
+    "," | "." | ";" | "(" | ")" | "[" | "]" | "|"
 }
 
 // Control Statement Grammar
@@ -19,7 +16,7 @@ control_statement      = { control_character ~ control_statement_name ~ control_
 control_statement_name = {
     !"begin" ~
     !"end" ~
-    ASCII_ALPHA+
+    letter_latin+
 }
 control_statement_body = { "{" ~ (expression_element | whitespace)+ ~ "}" }
 
@@ -28,7 +25,7 @@ environment          = { environment_begin ~ environment_content ~ environment_e
 environment_begin    = { control_character ~ "begin" ~ "{" ~ PUSH(environment_name) ~ "}" }
 environment_end      = { control_character ~ "end" ~ "{" ~ POP ~ "}" }
 environment_peek_end = { control_character ~ "end" ~ "{" ~ PEEK ~ "}" }
-environment_name     = { ASCII_ALPHA+ }
+environment_name     = { letter_latin+ }
 environment_content  = {
     (
         whitespace* ~
@@ -42,26 +39,23 @@ environment_expression_array = {
 
 // Control Characters & Meta Characters
 control_character           = _{ "\\" }
-whitespace                  = _{ (space_character | tab_character | NEWLINE)+ }
+whitespace                  = _{ (space_character | tab_character | linebreak_character)+ }
 space_character             = _{ " " }
 tab_character               = _{ "\t" }
-//! substituted with built-in
-//linebreak_character         = _{
-//    newline_character |
-//    caret_return_character |
-//    (caret_return_character ~ newline_character)
-//}
+linebreak_character         = _{
+    newline_character |
+    caret_return_character |
+    (caret_return_character ~ newline_character)
+}
 newline_character           = _{ "\n" }
 caret_return_character      = _{ "\r" }
 
 operator = {
     operator_infix |
     operator_postfix |
-    //operator_exp |
-    //operator_subscript |
-    operator_level |
-    operator_int   |
-    operator_frac
+    operator_exp |
+    operator_subscript |
+    operator_integral
 }
 operator_infix = {
     "=" | "+" | "-" | "–" | "*" | "/"
@@ -69,45 +63,28 @@ operator_infix = {
 operator_postfix  = { "!" }
 operator_argument = { control_statement_body | single_term }
 
-// Level-change Operator (what a stupid name)
-operator_level = { operator_exp | operator_subscript |
-                   operator_exp ~ operator_subscript |
-                   operator_subscript ~ operator_exp
-}
-operator_subscript = { "_" ~ operator_argument }
-operator_exp       = { "^" ~ operator_argument }
-
-
 // Exponentiation Operator
-//operator_exp = {
-//    operator_exp_base ~ "^" ~ operator_exp_exponent
-//}
-//operator_exp_base     = { operator_argument }
-//operator_exp_exponent = { operator_argument }
+operator_exp = {
+    operator_exp_base ~ "^" ~ operator_exp_exponent
+}
+operator_exp_base     = { operator_argument }
+operator_exp_exponent = { operator_argument }
 
 // Subscript Operator
-//operator_subscript = {
-//    operator_subscript_base ~ "_" ~ operator_subscript_index
-//}
-//operator_subscript_base  = { operator_argument }
-//operator_subscript_index = { operator_argument }
-
-// Fraction Operator
-operator_frac = {
-    control_character ~ "frac" ~ (whitespace* ~ operator_argument){2}
+operator_subscript = {
+    operator_subscript_base ~ "_" ~ operator_subscript_index
 }
+operator_subscript_base  = { operator_argument }
+operator_subscript_index = { operator_argument }
 
-// Integral Operator
-operator_int = {
-    //! This should match also multiple integrals (what about whitespaces???)
-    control_character ~ "i"+ ~ "nt" ~
+// Integral
+operator_integral = {
+    control_character ~ "int" ~
     whitespace* ~
     (
-        //! Added optionality as you can also have only one of the two
-        (operator_integral_subscript ~ whitespace* ~ operator_integral_superscript?) |
-        (operator_integral_superscript ~ whitespace* ~ operator_integral_subscript?)
-    //! Added optionality as you can have an undefined intergral
-    )? ~
+        (operator_integral_subscript ~ whitespace* ~ operator_integral_superscript) |
+        (operator_integral_superscript ~ whitespace* ~ operator_integral_subscript)
+    ) ~
     whitespace* ~
     operator_integral_body
 }
@@ -115,44 +92,38 @@ operator_integral_subscript = { "_" ~ operator_argument }
 operator_integral_superscript = { "^" ~ operator_argument }
 operator_integral_body = { operator_argument }
 
-// Text Operator
-operator_text = {
-    control_character ~ "text" ~ whitespace* ~ operator_argument
-}
-
 // Basics -------------------------------------------------------------------------------------------------------------
-number = { ASCII_DIGIT+ ~ "."? ~ ASCII_DIGIT* }
-letter = { ASCII_ALPHA | letter_greek }
+number = { ('0'..'9')+ ~ "."? ~ ('0'..'9')* }
+letter = { letter_latin | letter_greek }
 
 // Latin Letters ------------------------------------------------------------------------------------------------------
-//! This is in principle not required
 letter_latin = _{ 'a'..'z' | 'A'..'Z' }
 
 // Greek Letters ------------------------------------------------------------------------------------------------------
 letter_greek = {
-    letter_alpha   |
-    letter_beta    |
-    letter_gamma   |
-    letter_delta   |
-    letter_epsilon |
-    letter_zeta    |
-    letter_eta     |
-    letter_theta   |
-    letter_iota    |
-    letter_kappa   |
-    letter_lambda  |
-    letter_mu      |
-    letter_nu      |
-    letter_xi      |
+    letter_alpha |
+    letter_beta  |
+    letter_gamma |
+	letter_delta |
+	letter_epsilon |
+    letter_zeta |
+    letter_eta   |
+    letter_theta |
+    letter_iota  |
+    letter_kappa |
+    letter_lambda |
+    letter_mu    |
+    letter_nu    |
+    letter_xi    |
     letter_omicron |
-    letter_pi      |
-    letter_rho     |
-    letter_sigma   |
-    letter_tau     |
+    letter_pi    |
+	letter_rho   |
+	letter_sigma |
+    letter_tau |
     letter_upsilon |
-    letter_phi     |
-    letter_chi     |
-    letter_psi     |
+    letter_phi |
+    letter_chi |
+    letter_psi |
     letter_omega
 }
 
@@ -240,8 +211,3 @@ letter_omega_upper   = { control_character ~ "Omega" ~ !letter_latin }
 dots                   = { dots_character | dot_character }
 dots_character         = { control_character ~ ("dots" | "ldots") }
 dot_character          = { control_character ~ "cdot" }
-//! Added a few miscellanea
-vert_character         = { control_character ~ "vert" }
-langle_character       = { control_character ~ "langle" }
-rangle_character       = { control_character ~ "rangle" }
-
